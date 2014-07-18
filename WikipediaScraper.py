@@ -3,6 +3,8 @@
 from bs4 import BeautifulSoup
 import requests
 import re
+import csv
+import io
 
 """
 This project is aimed at comparing the similarity of the top songs from the 
@@ -52,18 +54,18 @@ hot100Links =  soup.find_all(attrs={'title':re.compile(r".*\bList of Billboard H
 #print hot100Links
 hot100Links = set(hot100Links)
 
+#output for good results
+goodOutputFile = io.open('dateSongArtist.csv', 'wb')
+goodOutputWriter = csv.writer(goodOutputFile)
+
+#output for bad results
+badOutputFile = io.open('badOutput.csv', 'wb')
+badOutputWriter = csv.writer(badOutputFile)
+
 for link in hot100Links:
 
   #Grab the actual url of the link from each element
   url = link.get('href')
-
-  #print(url)
-  #break
-
-  #There is just one link that we don't want but is caught by our regex
-  #We will simply skip it when we see it
-  if url == '/wiki/List_of_Billboard_number-one_singles_of_1958#Hot_100':
-    continue
 
   #follow each link
   yearlyPage = requests.get(site + url)
@@ -82,7 +84,13 @@ for link in hot100Links:
   #it turns out that the table on each page with the song information can
   #be easily grabbed because it is the first element with a class of
   #'wikitable'
-  songTable = yearlyPageSoup.find_all(attrs={'class':'wikitable'})[1]
+  songTable = None
+
+  try:
+    songTable = yearlyPageSoup.find_all(attrs={'class':'wikitable'})[1]
+  except IndexError:
+    continue
+
 
   """
   The table is arranged so that if a given week's top song is the same as 
@@ -123,8 +131,8 @@ for link in hot100Links:
 
     if i == 3:
       #these are the problem children. Need to send these to a file
-      print url 
-    
+      #print url 
+      badOutputWriter.writerow([url])    
 
     #we will use this variable to keep track of the song data
     songData = []
@@ -132,10 +140,8 @@ for link in hot100Links:
     #Next we will grab the week and use it and the year to assemble the date
   
     week = songInfo[0].get_text()
-
     completeDate = week + ' ' + yearlyPageYear
-
-    songData.append(completeDate)
+    songData.append(completeDate.encode('ascii','ignore'))
 
     #With the date assembled, we need to gather our song data 
     
@@ -144,26 +150,28 @@ for link in hot100Links:
       #assign song variable
       songTitle = songInfo[1].get_text()
       if songTitle:
-        songData.append(songTitle)
+        songData.append(songTitle.encode('ascii','ignore'))
         prevSong = songTitle
       else:
-        songData.append(prevSong)
+        songData.append(prevSong.encode('ascii','ignore'))
       #assign artist variable
 
       songArtist = songInfo[2].get_text()
       if songArtist:
-        songData.append(songArtist)
+        songData.append(songArtist.encode('ascii','ignore'))
         prevArtist = songArtist
       else:
-        songData.append(prevArtist) 
+        songData.append(prevArtist.encode('ascii','ignore')) 
 
     if i == 2: 
 
-      songData.append(prevSong)
-      songData.append(prevArtist)
+      songData.append(prevSong.encode('ascii','ignore'))
+      songData.append(prevArtist.encode('ascii','ignore'))
     
     #write to output file   
-    print songData
-      
+    #print songData
+    goodOutputWriter.writerow(songData)
 
-    
+#clean up
+goodOutputFile.close()
+badOutputFile.close()
