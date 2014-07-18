@@ -6,8 +6,7 @@ import re
 
 """
 This project is aimed at comparing the similarity of the top songs from the 
-Billboard top charts since 1940 to see if any trends or interesting features
-can be identified. 
+Billboard Hot 100 top charts since 1959 to see if any trends or interesting features can be identified. 
 """
 
 """
@@ -20,31 +19,22 @@ available.
 songs = {}
 
 #The ultimate source of all of the song titles
-site = "http://en.wikipedia.org/"
+site = "http://en.wikipedia.org"
 
 #First we get the main page
-r = requests.get(site + "wiki/List_of_Billboard_number-one_singles")
+
+r = requests.get(site + "/wiki/List_of_number-one_hits_(United_States)")
 data = r.text
+
 soup = BeautifulSoup(data)
 
+
 """
-Next we will grab all the hyperlinks that go to the yearly lists of top songs
-One feature that complicates this task slightly is that there are two sets of
-links that we want on the page - the "Pre-Hot 100 Era" and the "Hot 100 Era".
-However, they are each in a different type of html element. Additionally, the
-pages in both of the sections list the songs in a different format. Because of 
-this, we will handle each section separately and bring the results together
-
-
-We will begin with the links from the Pre-Hot 100 Era
-
 We know from looking at the html of the source page that all of the links we 
 want have a similarly-formed title attribute, so we start by grabbing all of 
 the elements on the page that have that kind of title (these will only be
 links)
 """
-
-preHot100Links =  soup.find_all(attrs={'title':re.compile(r".*\bList of Billboard number-one singles of [0-9]{4}\b$")}):
 
 """
 It turns out that there are two copies of each link on the page. We only want
@@ -52,18 +42,24 @@ one copy of each link so we will put all of these links into a set which will
 deduplicate these for us.
 """
 
-preHot100Set = set(preHot100Links)
 
 """
 Now we will go through each link in the set, go to its referenced page, and
 extract the top song for each week
 """
-for link in preHot100Set:
+
+hot100Links =  soup.find_all(attrs={'title':re.compile(r".*\bList of Billboard Hot 100 number-one singles of [0-9]{4}\b$")})
+#print hot100Links
+hot100Links = set(hot100Links)
+
+for link in hot100Links:
 
   #Grab the actual url of the link from each element
   url = link.get('href')
 
   #print(url)
+  #break
+
   #There is just one link that we don't want but is caught by our regex
   #We will simply skip it when we see it
   if url == '/wiki/List_of_Billboard_number-one_singles_of_1958#Hot_100':
@@ -86,7 +82,7 @@ for link in preHot100Set:
   #it turns out that the table on each page with the song information can
   #be easily grabbed because it is the first element with a class of
   #'wikitable'
-  songTable = yearlyPageSoup.find(attrs={'class':'wikitable'})
+  songTable = yearlyPageSoup.find_all(attrs={'class':'wikitable'})[1]
 
   """
   The table is arranged so that if a given week's top song is the same as 
@@ -103,26 +99,71 @@ for link in preHot100Set:
   instead of four
   """
 
-  #we will use this variable to keep track of the song data
-  songData = []
-
   #grab each row in the table and scrape the data from it
   songTableRows = songTable.find_all('tr')
+
+  prevSong = ""
+  prevArtist = ""
 
   #Now we will go through each row and get the song data from it
   for row in songTableRows:
     #We need to check to see if 
+    #print row
+    #break 
+    
+    songInfo = row.find_all("td")
+
+    #skip it if it's empty
+    if not songInfo:
+      continue
+
+    i = 0
+    for dataPoint in songInfo:
+      i += 1
+
+    if i == 3:
+      #these are the problem children. Need to send these to a file
+      print url 
+    
+
+    #we will use this variable to keep track of the song data
+    songData = []
+
+    #Next we will grab the week and use it and the year to assemble the date
   
-  #Next we will grab the week and use it and the year to assemble the date
-  week = ''
+    week = songInfo[0].get_text()
 
-  completeDate = week + ' ' + yearlyPageYear
+    completeDate = week + ' ' + yearlyPageYear
 
-  #With the date assembled, we need to gather our song data 
+    songData.append(completeDate)
 
-  #assign song variable
-  
-  #assign artist variable
+    #With the date assembled, we need to gather our song data 
+    
 
+    if i == 4:      
+      #assign song variable
+      songTitle = songInfo[1].get_text()
+      if songTitle:
+        songData.append(songTitle)
+        prevSong = songTitle
+      else:
+        songData.append(prevSong)
+      #assign artist variable
 
+      songArtist = songInfo[2].get_text()
+      if songArtist:
+        songData.append(songArtist)
+        prevArtist = songArtist
+      else:
+        songData.append(prevArtist) 
 
+    if i == 2: 
+
+      songData.append(prevSong)
+      songData.append(prevArtist)
+    
+    #write to output file   
+    print songData
+      
+
+    
