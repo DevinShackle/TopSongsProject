@@ -44,7 +44,6 @@ one copy of each link so we will put all of these links into a set which will
 deduplicate these for us.
 """
 
-
 """
 Now we will go through each link in the set, go to its referenced page, and
 extract the top song for each week
