@@ -27,7 +27,7 @@ print('we have lyrics for ' + str(len(lyricsQueried)) + ' songs')
 with open('alreadyHaveLyrics.txt','a') as alreadyHaveLyrics:
   
   #prep noLyrics file
-  with open('noLyrics.csv','w+') as noLyrics:
+  with open('noLyrics.csv','a') as noLyrics:
     noLyricsWriter = csv.writer(noLyrics)
 
     with open('dateSongArtist.csv','rb') as songFile:
@@ -57,10 +57,12 @@ with open('alreadyHaveLyrics.txt','a') as alreadyHaveLyrics:
 	lyricsQueried.add(title+artist)
 	alreadyHaveLyrics.write(title+artist+'\n')
 	# check if response contains lyrics
-	if 'xml' not in lyrics:
+	if 'xml' not in lyrics or '<Lyric>' not in lyrics:
 	  #we know that lyrics weren't returned 
 	  print("no lyrics found for "+title+" " +artist)
 	  noLyricsWriter.writerow(song)
+         
+	  time.sleep(20)
 	  continue
 
 	# parse the xml 
@@ -75,39 +77,9 @@ with open('alreadyHaveLyrics.txt','a') as alreadyHaveLyrics:
 	outputFileName = title.replace(' ','_')+'-'+artist.replace(' ','_')+'.txt'
 	
 	# write lyrics to lyrics file
-	with open(outputFileName, 'w+') as output:
+	with open('lyrics/'+outputFileName, 'w+') as output:
 	  output.write(lyricsCleaned)
 
-	"""
-	# get results page
-	queryResultsPage = requests.get(site + queryURL)
-	queryResultsText = queryResultsPage.text
-	queryResultsSoup = BeautifulSoup(queryResultsText)
-
-	# find link to lyrics page
-	#TODO Add error checking - what does it do if it can't find it?
-	lyricsPath = queryResultsSoup.find('a',text=re.compile(title))
-	lyricsURL = site + lyricsPath
-
-	# get lyrics page
-	lyricsPage = requests.get(lyricsURL)
-	lyricsText = lyricsPage.text
-	lyricsSoup = BeautifulSoup(lyricsText)     
-   
-	# scrape lyrics
-	words = lyricsSoup('div',style="margin-left:10px;margin-right:10px;")[0]
-	# clean up lyrics
-	words = words.replace('<div style="margin-left:10px;margin-right:10px;">','').replace('<!-- start of lyrics -->','').replace('<br/>','').replace('<br>','').replace('<i>[Chorus]</i>','').replace('<!-- end of lyrics -->','').replace('<div>','')
-	
-	# if unsuccessful, write song and artist out to noLyrics
-
-	# assemble data for lyric file title
-	outputFileName = data+title+artist.txt
-
-	# write lyrics to lyrics file
-	with open(outputFileName, 'w') as output:
-	  output.write(words)
-	"""
 	#conn.close()
 	# pause so as to not overload server
 	time.sleep(20)
