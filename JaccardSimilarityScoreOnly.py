@@ -14,7 +14,7 @@ def jacSim(set1,set2):
 
 #go through song list and get each lyric file path
 
-with open('jacSimScoreOnlyOut.tsv','w+') as output:
+with open('data/jacSimScoreOnlyOut.tsv','w+') as output:
 
   outputWriter = csv.writer(output,delimiter='\t')
 
