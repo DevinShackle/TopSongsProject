@@ -14,7 +14,11 @@ with open('data/dateSongArtist.tsv','rb') as dsa:
       year = date[2]
       title = lineSplit[1].replace(' ','_')
       artist = lineSplit[2].replace(' ','_')
-      outputWriter.writerow(lineSplit + [month,year,title+'-'+artist])
+      outputLine = lineSplit + [month,year,title+'-'+artist]
+      for field in outputLine:
+        if '\n' in field:
+          field.replace('\n','')
+      outputWriter.writerow(outputLine)
 
 
 #read uniqueVStotalWords.tsv file
@@ -27,8 +31,12 @@ with open('data/uniqueVStotalWords.tsv','rb') as utw:
         try:
           print('processing ' + line) 
           lineSplit = line.split('\t')
-          joinable = lineSplit[0] + '-' + lineSplit[1]
-          outputWriter.writerow(lineSplit + [joinable])
+          joinable = lineSplit[1] + '-' + lineSplit[0]
+          outputLine = lineSplit + [joinable]
+          for field in outputLine:
+            if '\n' in field:
+              field.replace('\n','')
+          outputWriter.writerow(outputLine)
         except:
           print('error on line: ' + line)
           errorWriter.writerow(line)
